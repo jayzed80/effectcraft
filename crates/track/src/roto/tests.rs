@@ -722,3 +722,21 @@ fn the_union_of_objects_is_their_largest_extent() {
     let odd = FrameSeg::empty(2, 2);
     assert_eq!(FrameSeg::union(vec![seg(&[1]), odd]).matte, vec![0, 255, 0, 0]);
 }
+
+#[test]
+fn extreme_frame_indices_do_not_overflow() {
+    // a base on the last representable frame: nothing lies after it, and the keys must not overflow
+    let d = RotoData { base: Some(i64::MAX), span: [i64::MAX - 2, i64::MAX], ..RotoData::default() };
+    let keys = d.chain_keys(1);
+    assert_eq!(keys.len(), 3);
+    // a first stroke on the last frame with a span either side
+    let mut d = RotoData::default();
+    let s = Stroke { kind: StrokeKind::Fg, frame: i64::MAX, radius: 10.0, points: vec![], object: 0 };
+    d.add(s, 20, [i64::MIN, i64::MAX]);
+    assert_eq!(d.base, Some(i64::MAX));
+    assert_eq!(d.span[1], i64::MAX);
+    let s = Stroke { kind: StrokeKind::Fg, frame: i64::MIN, radius: 10.0, points: vec![], object: 0 };
+    let mut d = RotoData::default();
+    d.add(s, 20, [i64::MIN, i64::MAX]);
+    assert_eq!(d.span[0], i64::MIN);
+}

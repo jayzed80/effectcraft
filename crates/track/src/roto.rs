@@ -161,7 +161,7 @@ impl RotoData {
         match self.base {
             None if s.kind.is_segmentation() => {
                 self.base = Some(f);
-                self.span = [(f - default_span).max(limits[0]), (f + default_span).min(limits[1]).max(f)];
+                self.span = [f.saturating_sub(default_span).max(limits[0]), f.saturating_add(default_span).min(limits[1]).max(f)];
             }
             Some(_) => {
                 self.span[0] = self.span[0].min(f);
@@ -192,7 +192,10 @@ impl RotoData {
         let k0 = key(seed, base);
         out.insert(base, k0);
         let mut k = k0;
-        for f in base + 1..=self.span[1] {
+        for f in base.saturating_add(1)..=self.span[1] {
+            if f == base {
+                break;
+            }
             k = key(k, f);
             out.insert(f, k);
         }
