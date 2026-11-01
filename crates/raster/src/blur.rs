@@ -134,12 +134,12 @@ fn box_radii(sigma: f64, n: usize) -> Vec<usize> {
         return vec![0; n];
     }
     let w_ideal = (12.0 * sigma * sigma / n as f64 + 1.0).sqrt();
-    let mut wl = w_ideal.floor() as i64;
+    let mut wl = w_ideal.floor().min(1.0e9) as i64;
     if wl % 2 == 0 {
         wl -= 1;
     }
     let wu = wl + 2;
-    let m_ideal = (12.0 * sigma * sigma - (n as i64 * wl * wl) as f64 - 4.0 * n as f64 * wl as f64 - 3.0 * n as f64) / (-4.0 * wl as f64 - 4.0);
+    let m_ideal = (12.0 * sigma * sigma - n as f64 * wl as f64 * wl as f64 - 4.0 * n as f64 * wl as f64 - 3.0 * n as f64) / (-4.0 * wl as f64 - 4.0);
     let m = m_ideal.round() as i64;
     (0..n as i64).map(|i| (((if i < m { wl } else { wu }) - 1) / 2).max(0) as usize).collect()
 }
@@ -345,5 +345,16 @@ mod tests {
         let r = box_radii(10.0, 3);
         assert_eq!(r.len(), 3);
         assert!(r.iter().all(|&v| (7..=10).contains(&v)), "{r:?}");
+    }
+}
+
+#[cfg(test)]
+mod huge_sigma_tests {
+    use super::*;
+
+    #[test]
+    fn box_radii_huge_sigma_does_not_overflow() {
+        let r = box_radii(1.0e10, 3);
+        assert_eq!(r.len(), 3);
     }
 }
